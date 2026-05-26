@@ -10,10 +10,9 @@ from botocore.exceptions import ClientError
 
 class UsersManagement:
     def __init__(self):
-        if 'AWS_ACCESS_KEY_ID' in st.secrets:
-            os.environ['AWS_ACCESS_KEY_ID'] = st.secrets['AWS_ACCESS_KEY_ID']
-            os.environ['AWS_SECRET_ACCESS_KEY'] = st.secrets['AWS_SECRET_ACCESS_KEY']
-            os.environ['AWS_DEFAULT_REGION'] = st.secrets['AWS_DEFAULT_REGION']
+        os.environ['AWS_ACCESS_KEY_ID'] = st.secrets['AWS_ACCESS_KEY_ID']
+        os.environ['AWS_SECRET_ACCESS_KEY'] = st.secrets['AWS_SECRET_ACCESS_KEY']
+        os.environ['AWS_DEFAULT_REGION'] = st.secrets['AWS_DEFAULT_REGION']
 
         self.config = self._open_config()
         self.config_name = 'config.yaml'
