@@ -1,64 +1,152 @@
 import streamlit as st
 import streamlit_authenticator as stauth
-import yaml
-from yaml.loader import SafeLoader
+import gspread
+from google.oauth2.service_account import Credentials
 import time
-import os
+import bcrypt
 import logging
-import boto3
-from botocore.exceptions import ClientError
+
+# ─────────────────────────────────────────────
+# Escopos necessários para a Service Account
+# ─────────────────────────────────────────────
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
+
+# Nome das colunas na planilha (linha 1 = cabeçalho)
+# username | name | email | password | preauthorized
+SHEET_NAME = "medphys_users"  # nome da aba na planilha
+
 
 class UsersManagement:
     def __init__(self):
-        os.environ['AWS_ACCESS_KEY_ID'] = st.secrets['AWS_ACCESS_KEY_ID']
-        os.environ['AWS_SECRET_ACCESS_KEY'] = st.secrets['AWS_SECRET_ACCESS_KEY']
-        os.environ['AWS_DEFAULT_REGION'] = st.secrets['AWS_DEFAULT_REGION']
-
-        self.config = self._open_config()
-        self.config_name = 'config.yaml'
-        self.bucket = 'fisica-medica-hcpa'
+        self._gc = self._get_gspread_client()
+        self._worksheet = self._get_worksheet()
+        self.config = self._load_config()
         self.authenticator = self._build_authenticator()
-        
-        st.session_state['user_management'] = self
-        
-    def _open_config(self) -> dict:
-        s3 = boto3.client('s3')
-        s3.download_file('fisica-medica-hcpa', 'config.yaml', 'config.yaml')
-        
-        with open("config.yaml") as file:
-            config = yaml.load(file, Loader=SafeLoader)
-        return config
-    
+        st.session_state["user_management"] = self
+
+    # ──────────────────────────────────────────
+    # Conexão com Google Sheets
+    # ──────────────────────────────────────────
+
+    def _get_gspread_client(self) -> gspread.Client:
+        """Cria cliente gspread usando credenciais do st.secrets."""
+        creds = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=SCOPES,
+        )
+        return gspread.authorize(creds)
+
+    def _get_worksheet(self) -> gspread.Worksheet:
+        """Abre a planilha pelo ID definido em st.secrets."""
+        spreadsheet = self._gc.open_by_key(st.secrets["google_sheets"]["spreadsheet_id"])
+        try:
+            ws = spreadsheet.worksheet(SHEET_NAME)
+        except gspread.WorksheetNotFound:
+            # Cria a aba com cabeçalho se não existir
+            ws = spreadsheet.add_worksheet(title=SHEET_NAME, rows=200, cols=5)
+            ws.append_row(["username", "name", "email", "password", "preauthorized"])
+        return ws
+
+    # ──────────────────────────────────────────
+    # Leitura / escrita do config
+    # ──────────────────────────────────────────
+
+    def _load_config(self) -> dict:
+        """Lê a planilha e monta o dict de config do streamlit-authenticator."""
+        records = self._worksheet.get_all_records()
+        credentials = {"usernames": {}}
+        preauthorized = {"emails": []}
+
+        for row in records:
+            uname = row.get("username", "").strip()
+            if not uname:
+                continue
+            credentials["usernames"][uname] = {
+                "name": row.get("name", ""),
+                "email": row.get("email", ""),
+                "password": row.get("password", ""),  # já armazenado como hash bcrypt
+            }
+            if str(row.get("preauthorized", "")).lower() in ("true", "1", "yes"):
+                preauthorized["emails"].append(row.get("email", ""))
+
+        return {
+            "credentials": credentials,
+            "cookie": {
+                "name": st.secrets["cookie"]["name"],
+                "key": st.secrets["cookie"]["key"],
+                "expiry_days": int(st.secrets["cookie"].get("expiry_days", 30)),
+            },
+            "preauthorized": preauthorized,
+        }
+
+    def _save_config(self) -> bool:
+        """Sobrescreve a planilha com o estado atual de self.config."""
+        try:
+            rows = [["username", "name", "email", "password", "preauthorized"]]
+            users = self.config["credentials"]["usernames"]
+            pre_emails = set(self.config.get("preauthorized", {}).get("emails", []))
+            for uname, info in users.items():
+                rows.append([
+                    uname,
+                    info.get("name", ""),
+                    info.get("email", ""),
+                    info.get("password", ""),
+                    "true" if info.get("email", "") in pre_emails else "false",
+                ])
+            # Limpa e reescreve a aba inteira
+            self._worksheet.clear()
+            self._worksheet.update(rows)
+            return True
+        except Exception as e:
+            logging.error(f"Erro ao salvar no Google Sheets: {e}")
+            return False
+
+    # ──────────────────────────────────────────
+    # Autenticador
+    # ──────────────────────────────────────────
+
     def _build_authenticator(self) -> stauth.Authenticate:
-        authenticator = stauth.Authenticate(
+        return stauth.Authenticate(
             self.config["credentials"],
             self.config["cookie"]["name"],
             self.config["cookie"]["key"],
             self.config["cookie"]["expiry_days"],
             self.config["preauthorized"],
         )
-        return authenticator
+
+    # ──────────────────────────────────────────
+    # Widgets públicos (mesma interface de antes)
+    # ──────────────────────────────────────────
 
     def login_widget(self) -> None:
         try:
-            self.authenticator.login(fields={"Form name": "Log in","Username": "Usuário", "Password": "Senha"})
+            self.authenticator.login(
+                fields={
+                    "Form name": "Log in",
+                    "Username": "Usuário",
+                    "Password": "Senha",
+                }
+            )
         except Exception as e:
             st.error(e)
-            
+
     def logout_widget(self) -> None:
         try:
             self.authenticator.logout("Log out", "sidebar")
         except Exception as e:
             st.error(e)
-            
+
     def get_user_info(self) -> None:
         with st.container(border=True):
-            users = self.config['credentials']['usernames']
-            st.write(f'## Usuários cadastrados')
+            users = self.config["credentials"]["usernames"]
+            st.write("## Usuários cadastrados")
             for user, user_info in users.items():
-                st.write(f'### {user}')
-                st.write(f'**Nome:** {user_info["name"]}')
-                st.write(f'**Email:** {user_info["email"]}')
+                st.write(f"### {user}")
+                st.write(f"**Nome:** {user_info['name']}")
+                st.write(f"**Email:** {user_info['email']}")
 
     def forgot_password_widget(self) -> None:
         try:
@@ -74,7 +162,7 @@ class UsersManagement:
                 }
             )
             if username_of_forgotten_password:
-                st.session_state['forgot_password_clicked'] = False
+                st.session_state["forgot_password_clicked"] = False
                 st.success("Nova senha enviada por e-mail com sucesso!")
                 time.sleep(1)
                 st.rerun()
@@ -82,7 +170,7 @@ class UsersManagement:
                 st.error("Usuário não encontrado")
         except Exception as e:
             st.error(e)
-        
+
     def forgot_username_widget(self) -> None:
         try:
             username_of_forgotten_username, email_of_forgotten_username = (
@@ -95,7 +183,7 @@ class UsersManagement:
                 )
             )
             if username_of_forgotten_username:
-                st.session_state['forgot_username_clicked'] = False
+                st.session_state["forgot_username_clicked"] = False
                 st.success("Usuário enviado por e-mail com sucesso!")
                 time.sleep(1)
                 st.rerun()
@@ -103,36 +191,33 @@ class UsersManagement:
                 st.error("Email não encontrado")
         except Exception as e:
             st.error(e)
-        
+
     def reset_password_widget(self) -> None:
-        if st.session_state['username'] == None:
-            pass
-        else:
-            try:
-                if self.authenticator.reset_password(
-                    st.session_state["username"],
-                    fields={
-                        "Form name": "Redefinir senha",
-                        "Current password": "Senha atual",
-                        "New password": "Nova senha",
-                        "Repeat password": "Repetir senha",
-                        "Reset": "Redefinir",
-                    }
-                ):
-                    upload_status = self._save_config()
-                    if upload_status:
-                        st.success("Senha modificada com sucesso!")
-                    else:
-                        st.error("Erro ao modificar senha")
-            except Exception as e:
-                error_messages = {
-                    "Password/repeat password fields cannot be empty": "Senha e repetição de senha não podem estar vazios!",
-                    "Passwords do not match": "Senhas não coincidem!",
-                    "Current password is incorrect": "Senha atual incorreta!"
-                }
-                error_message = error_messages.get(str(e), str(e))
-                st.error(error_message)
-        
+        if st.session_state.get("username") is None:
+            return
+        try:
+            if self.authenticator.reset_password(
+                st.session_state["username"],
+                fields={
+                    "Form name": "Redefinir senha",
+                    "Current password": "Senha atual",
+                    "New password": "Nova senha",
+                    "Repeat password": "Repetir senha",
+                    "Reset": "Redefinir",
+                },
+            ):
+                if self._save_config():
+                    st.success("Senha modificada com sucesso!")
+                else:
+                    st.error("Erro ao modificar senha")
+        except Exception as e:
+            error_messages = {
+                "Password/repeat password fields cannot be empty": "Senha e repetição de senha não podem estar vazios!",
+                "Passwords do not match": "Senhas não coincidem!",
+                "Current password is incorrect": "Senha atual incorreta!",
+            }
+            st.error(error_messages.get(str(e), str(e)))
+
     def new_user_widget(self) -> None:
         try:
             (
@@ -141,107 +226,80 @@ class UsersManagement:
                 _,
             ) = self.authenticator.register_user(
                 preauthorization=False,
-                domains=['@hcpa.edu.br'],
+                domains=["@hcpa.edu.br"],
                 fields={
                     "Form name": "Registrar usuário",
                     "Email": "Email",
-                    'Name': 'Nome',
+                    "Name": "Nome",
                     "Username": "Usuário",
                     "Password": "Senha",
                     "Repeat password": "Repetir senha",
                     "Register": "Registrar",
-                }
+                },
             )
             if email_of_registered_user:
-                upload_status = self._save_config()
-                if upload_status:
+                if self._save_config():
                     st.success("Usuário registrado com sucesso!")
                 else:
                     st.error("Erro ao registrar usuário")
         except Exception as e:
             error_messages = {
-                    "Password/repeat password fields cannot be empty": "Senha e repetição de senha não podem estar vazios!",
-                    "Passwords do not match": "Senhas não coincidem!",
-                    "Email is not valid": "Email não é válido!",
-                    "Email already taken": "Email já registrado!",
-                    "Username is not valid": "Usuário não é válido!",
-                    "Name is not valid": "Nome não é válido!",
-                    "Email not allowed to register": "Email não permitido para registro!"
-                }
-            error_message = error_messages.get(str(e), str(e))
-            st.error(error_message)
-        
+                "Password/repeat password fields cannot be empty": "Senha e repetição de senha não podem estar vazios!",
+                "Passwords do not match": "Senhas não coincidem!",
+                "Email is not valid": "Email não é válido!",
+                "Email already taken": "Email já registrado!",
+                "Username is not valid": "Usuário não é válido!",
+                "Name is not valid": "Nome não é válido!",
+                "Email not allowed to register": "Email não permitido para registro!",
+            }
+            st.error(error_messages.get(str(e), str(e)))
+
     def update_user_widget(self) -> None:
-        if st.session_state['username'] == None:
-            pass
-        else:
-            try:
-                if self.authenticator.update_user_details(
-                    st.session_state["username"],
-                    fields={
-                        "Form name": "Atualizar detalhes do usuário",
-                        "Field": "Campo",
-                        "Name": "Nome",
-                        "Email": "Email",
-                        "New value": "Novo valor",
-                        "Update": "Atualizar",
-                    },
-                ):
-                    upload_status = self._save_config()
-                    if upload_status:
-                        st.success("Campos atualizados com sucesso!")
-                    else:
-                        st.error("Erro ao atualizar campos")
-            except Exception as e:
-                error_messages = {
-                        "Field cannot be empty": "Campo não pode estar vazio!",
-                        "New value not provided": "Novo valor não fornecido!",
-                        "Email is not valid": "Email não é válido!",
-                        "Email already taken": "Email já registrado!",
-                        "Name is not valid": "Nome não é válido!",
-                        "New and current values are the same": "Novo e valor atual são iguais!"
-                    }
-                error_message = error_messages.get(str(e), str(e))
-                st.error(error_message)
-            
+        if st.session_state.get("username") is None:
+            return
+        try:
+            if self.authenticator.update_user_details(
+                st.session_state["username"],
+                fields={
+                    "Form name": "Atualizar detalhes do usuário",
+                    "Field": "Campo",
+                    "Name": "Nome",
+                    "Email": "Email",
+                    "New value": "Novo valor",
+                    "Update": "Atualizar",
+                },
+            ):
+                if self._save_config():
+                    st.success("Campos atualizados com sucesso!")
+                else:
+                    st.error("Erro ao atualizar campos")
+        except Exception as e:
+            error_messages = {
+                "Field cannot be empty": "Campo não pode estar vazio!",
+                "New value not provided": "Novo valor não fornecido!",
+                "Email is not valid": "Email não é válido!",
+                "Email already taken": "Email já registrado!",
+                "Name is not valid": "Nome não é válido!",
+                "New and current values are the same": "Novo e valor atual são iguais!",
+            }
+            st.error(error_messages.get(str(e), str(e)))
+
     def _remove_user_submit(self, username: str) -> None:
-        if username is None:
-            st.error('Usuário não pode estar vazio')
-        elif self.config['credentials']['usernames'].get(username, False):
-            st.error('Usuário não encontrado')
+        if not username:
+            st.error("Usuário não pode estar vazio")
+        elif username not in self.config["credentials"]["usernames"]:
+            st.error("Usuário não encontrado")
         else:
-            del self.config['credentials']['usernames'][username]
-            upload_status = self._save_config()
-            if upload_status:
-                st.success('Usuário removido com sucesso!')
+            del self.config["credentials"]["usernames"][username]
+            if self._save_config():
+                st.success("Usuário removido com sucesso!")
             else:
-                st.error('Erro ao remover usuário')
-            
-    def remove_user_widget(self) -> None:   
-        with st.form('remove_user'):
-            st.write('### Remover usuário')
-            username = st.text_input('Usuário')
-            submit_button = st.form_submit_button('Remover')
+                st.error("Erro ao remover usuário")
+
+    def remove_user_widget(self) -> None:
+        with st.form("remove_user"):
+            st.write("### Remover usuário")
+            username = st.text_input("Usuário")
+            submit_button = st.form_submit_button("Remover")
             if submit_button:
                 self._remove_user_submit(username)
-            
-    def _upload_file(self):
-        """Upload a file to an S3 bucket
-        :return: True if file was uploaded, else False
-        """
-
-        # Upload the file
-        s3_client = boto3.client('s3')
-        try:
-            response = s3_client.upload_file(self.config_name, self.bucket, self.config_name)
-        except ClientError as e:
-            logging.error(e)
-            return False
-        return True
-            
-    def _save_config(self) -> bool:
-        with open("config.yaml", "w") as file:
-            yaml.dump(self.config, file, default_flow_style=False)
-            
-        upload_status = self._upload_file()
-        return upload_status
