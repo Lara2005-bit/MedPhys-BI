@@ -43,10 +43,10 @@ class UsersManagement:
         """Abre a planilha pelo ID definido em st.secrets."""
         spreadsheet = self._gc.open_by_key(st.secrets["google_sheets"]["spreadsheet_id"])
         try:
-            ws = spreadsheet.worksheet(medphys_users)
+            ws = spreadsheet.worksheet(SHEET_NAME)
         except gspread.WorksheetNotFound:
             # Cria a aba com cabeçalho se não existir
-            ws = spreadsheet.add_worksheet(title=medphys_users, rows=200, cols=5)
+            ws = spreadsheet.add_worksheet(title=SHEET_NAME, rows=200, cols=5)
             ws.append_row(["username", "name", "email", "password", "preauthorized"])
         return ws
 
