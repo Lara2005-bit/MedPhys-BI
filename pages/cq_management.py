@@ -21,7 +21,7 @@ st.sidebar.image(img, use_column_width=True)
 
 menu_with_redirect()
 
-uri = f"mongodb+srv://medphys_user:{st.secrets['MONGODB_PASSWORD']}@cluster0.dl2yo1n.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+uri = f"mongodb+srv://medphys_user:{st.secrets['MONGODB_PASSWORD']}@cluster0.dl2yo1n.mongodb.net/?appName=Cluster0"
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), maxIdleTimeMS=60000*10)
