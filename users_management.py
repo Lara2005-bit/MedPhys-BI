@@ -67,7 +67,7 @@ class UsersManagement:
             credentials["usernames"][uname] = {
                 "name": row.get("name", ""),
                 "email": row.get("email", ""),
-                "hashed_password": row.get("password", ""),  # já armazenado como hash bcrypt
+                "password": row.get("password", ""),  # já armazenado como hash bcrypt
             }
             if str(row.get("preauthorized", "")).lower() in ("true", "1", "yes"):
                 preauthorized["emails"].append(row.get("email", ""))
