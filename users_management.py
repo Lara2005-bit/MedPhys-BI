@@ -81,6 +81,7 @@ class UsersManagement:
             },
             "preauthorized": preauthorized,
         }
+
     def _save_config(self) -> bool:
         """Sobrescreve a planilha com o estado atual de self.config."""
         try:
