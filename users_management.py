@@ -54,34 +54,36 @@ class UsersManagement:
     # Leitura / escrita do config
     # ──────────────────────────────────────────
 
-    def _load_config(self) -> dict:
-        """Lê a planilha e monta o dict de config do streamlit-authenticator."""
-        records = self._worksheet.get_all_records()
-        credentials = {"usernames": {}}
-        preauthorized = {"emails": []}
+def _load_config(self) -> dict:
+    records = self._worksheet.get_all_records()
+    credentials = {"usernames": {}}
+    preauthorized = {"emails": []}
 
-        for row in records:
-            uname = row.get("username", "").strip()
-            if not uname:
-                continue
-            credentials["usernames"][uname] = {
-                "name": row.get("name", ""),
-                "email": row.get("email", ""),
-                "hashed_password": row.get("password", ""),  # já armazenado como hash bcrypt
-            }
-            if str(row.get("preauthorized", "")).lower() in ("true", "1", "yes"):
-                preauthorized["emails"].append(row.get("email", ""))
-
-        return {
-            "credentials": credentials,
-            "cookie": {
-                "name": st.secrets["cookie"]["name"],
-                "key": st.secrets["cookie"]["key"],
-                "expiry_days": int(st.secrets["cookie"].get("expiry_days", 30)),
-            },
-            "preauthorized": preauthorized,
+    for row in records:
+        uname = row.get("username", "").strip()
+        if not uname:
+            continue
+        credentials["usernames"][uname] = {
+            "name": row.get("name", ""),
+            "email": row.get("email", ""),
+            "hashed_password": row.get("password", ""),
         }
+        if str(row.get("preauthorized", "")).lower() in ("true", "1", "yes"):
+            preauthorized["emails"].append(row.get("email", ""))
 
+    # DEBUG TEMPORÁRIO - remover depois
+    import streamlit as st
+    st.write("DEBUG credentials:", credentials)
+
+    return {
+        "credentials": credentials,
+        "cookie": {
+            "name": st.secrets["cookie"]["name"],
+            "key": st.secrets["cookie"]["key"],
+            "expiry_days": int(st.secrets["cookie"].get("expiry_days", 30)),
+        },
+        "preauthorized": preauthorized,
+    }
     def _save_config(self) -> bool:
         """Sobrescreve a planilha com o estado atual de self.config."""
         try:
