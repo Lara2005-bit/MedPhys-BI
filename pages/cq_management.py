@@ -207,12 +207,13 @@ with arquivamento:
     teste_col.find(query, {'_id': 0, 'Data da próxima realização': 0})
 ))
     if testes.empty:
-    testes = pd.DataFrame(columns=[
-        'Equipamento',
-        'Nome',
-        'Data de realização',
-        'Arquivado'
-    ])
+        testes = pd.DataFrame(columns=[
+            'Equipamento',
+            'Nome',
+            'Data de realização',
+            'Arquivado'
+        ])
+        
     filtered_tests = filters_archivation(testes)
 
     styler = StylizedCQ(filtered_tests)
