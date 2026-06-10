@@ -109,7 +109,7 @@ with indicadores:
         month = months[months_key]
 
     # -------- PERÍODO --------
-    begin_period = datetime(year, month, 1) - pd.DateOffset(year=1)
+    begin_period = datetime(year, month, 1) - pd.DateOffset(years=1)
     end_period = datetime(year, month, 1) + pd.DateOffset(months=1)
 
     query_due = {
@@ -132,6 +132,13 @@ with indicadores:
     except Exception as e:
         st.error(f"Erro MongoDB query: {e}")
         st.stop()
+
+    # Garante colunas mínimas em DataFrames vazios para evitar KeyError no merge
+    required_cols = ['Equipamento', 'Nome', 'Data de realização', 'Arquivado']
+    if df_tests_to_due.empty:
+        df_tests_to_due = pd.DataFrame(columns=required_cols + ['Data da próxima realização'])
+    if df_tests_now.empty:
+        df_tests_now = pd.DataFrame(columns=required_cols)
 
     df_tests_need_to_do = get_tests_need_to_do(df_tests_to_due, df_tests_now)
     df_tests_need_to_do = check_materials(df_tests_need_to_do)
