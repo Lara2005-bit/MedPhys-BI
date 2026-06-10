@@ -83,8 +83,8 @@ year = st.selectbox(
     years,
     index=default_index
 )
-    with col2:
-        months = {
+with col2:
+    months = {
             'Janeiro': 1,
             'Fevereiro': 2,
             'Março': 3,
