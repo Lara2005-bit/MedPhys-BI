@@ -98,9 +98,9 @@ with col2:
             'Novembro': 11,
             'Dezembro': 12
         }
-        current_month = datetime.now().month
-        months_key = st.selectbox('Selecione o mês', months.keys(), index=(current_month - 1))
-        month = months[months_key]
+    current_month = datetime.now().month
+    months_key = st.selectbox('Selecione o mês', months.keys(), index=(current_month - 1))
+    month = months[months_key]
     
     # Query para buscar os testes que estão para vencer
     begin_period = datetime(year, month, 1) - pd.DateOffset(year=1)
