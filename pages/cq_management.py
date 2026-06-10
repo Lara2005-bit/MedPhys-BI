@@ -59,11 +59,30 @@ with indicadores:
                 }
             }
         ]
-        distinct_years = collection.aggregate(pipeline)
-        years = sorted([year['_id'] for year in distinct_years])[1:]
-        current_year = datetime.now().year
-        year = st.selectbox('Selecione o ano', years, index=years.index(current_year))
-    
+distinct_years = collection.aggregate(pipeline)
+
+years = sorted(
+    y['_id']
+    for y in distinct_years
+    if y['_id'] is not None
+)
+
+if not years:
+    st.error("Nenhum ano encontrado na coleção.")
+    st.stop()
+
+current_year = datetime.now().year
+
+if current_year in years:
+    default_index = years.index(current_year)
+else:
+    default_index = len(years) - 1
+
+year = st.selectbox(
+    "Selecione o ano",
+    years,
+    index=default_index
+)
     with col2:
         months = {
             'Janeiro': 1,
