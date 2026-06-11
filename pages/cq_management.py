@@ -56,38 +56,10 @@ with indicadores:
     col1, col2 = st.columns(2)
 
     # -------- ANOS (SEGURO) --------
-    with col1:
-        try:
-            pipeline = [
-                {
-                    "$project": {
-                        "year": {
-                            "$year": {
-                                "$ifNull": ["$Data da próxima realização", datetime.now()]
-                            }
-                        }
-                    }
-                },
-                {"$group": {"_id": "$year"}}
-            ]
-
-            distinct_years = list(collection.aggregate(pipeline))
-            years = sorted(
-                [y["_id"] for y in distinct_years if y.get("_id") is not None]
-            )
-
-        except Exception as e:
-            st.warning(f"Erro Mongo anos: {e}")
-            years = []
-
-        current_year = datetime.now().year
-
-        if not years:
-            years = [current_year]
-
-        default_index = years.index(current_year) if current_year in years else 0
-
-        year = st.selectbox("Selecione o ano", years, index=default_index)
+with col1:
+    current_year = datetime.now().year
+    years = list(range(current_year - 5, current_year + 2))
+    year = st.selectbox("Selecione o ano", years, index=years.index(current_year))
 
     # -------- MESES --------
     with col2:
