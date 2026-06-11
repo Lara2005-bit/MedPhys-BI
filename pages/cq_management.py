@@ -200,57 +200,48 @@ def change_archive_status():
 
 with arquivamento:
     teste_col = db['testes']
-
     query = user_period_query()
+    raw = list(teste_col.find(query, {'_id': 0, 'Data da próxima realização': 0}))
 
-    testes = pd.DataFrame(list(
-        teste_col.find(query, {'_id': 0, 'Data da próxima realização': 0})
-    ))
+    if not raw:
+        st.info("Nenhum teste encontrado para o período. Cadastre testes na aba 'Registrar teste'.")
+    else:
+        testes = pd.DataFrame(raw)
+        filtered_tests = filters_archivation(testes)
+        styler = StylizedCQ(filtered_tests)
+        stylized_table = styler.stylized_testes()
 
-    filtered_tests = filters_archivation(testes)
+        edited_df = st.data_editor(
+            stylized_table,
+            hide_index=True,
+            use_container_width=True,
+            on_change=change_archive_status,
+            disabled=('Equipamento', 'Nome', 'Data de realização', 'Data da próxima realização')
+        )
 
-    styler = StylizedCQ(filtered_tests)
-    stylized_table = styler.stylized_testes()
+        st.markdown("""
+            <span style='font-size: smaller;'>
+            **Observação:** período de 1 mês. Clique na caixa para arquivar.
+            </span>
+        """, unsafe_allow_html=True)
 
-    edited_df = st.data_editor(
-        stylized_table,
-        hide_index=True,
-        use_container_width=True,
-        on_change=change_archive_status,
-        disabled=('Equipamento', 'Nome', 'Data de realização', 'Data da próxima realização')
-    )
-
-    st.markdown("""
-        <span style='font-size: smaller;'>
-        **Observação:** período de 1 mês.
-        Clique na caixa para arquivar.
-        </span>
-    """, unsafe_allow_html=True)
-
-    if st.session_state.teste_archivation:
-        st.session_state.teste_archivation = False
-
-        diff = filtered_tests.compare(edited_df)
-        diff.columns = diff.columns.droplevel(0)
-
-        diff_indices = diff[diff['self'].notna() | diff['other'].notna()].index
-        diff_rows = filtered_tests.loc[diff_indices]
-
-        query = diff_rows.drop(columns='Arquivado').to_dict('records')
-
-        diff_value = diff['other']
-        archived_status = {'Arquivado': diff_value.values[0]}
-
-        update_status = teste_col.update_one(query[0], {'$set': archived_status})
-
-        if update_status.matched_count > 0:
-            st.success("Atualizado!")
-            time.sleep(1)
-            client.close()
-            st.rerun()
-        else:
-            st.error("Erro ao atualizar!")
-
+        if st.session_state.teste_archivation:
+            st.session_state.teste_archivation = False
+            diff = filtered_tests.compare(edited_df)
+            diff.columns = diff.columns.droplevel(0)
+            diff_indices = diff[diff['self'].notna() | diff['other'].notna()].index
+            diff_rows = filtered_tests.loc[diff_indices]
+            query = diff_rows.drop(columns='Arquivado').to_dict('records')
+            diff_value = diff['other']
+            archived_status = {'Arquivado': diff_value.values[0]}
+            update_status = teste_col.update_one(query[0], {'$set': archived_status})
+            if update_status.matched_count > 0:
+                st.success("Atualizado!")
+                time.sleep(1)
+                client.close()
+                st.rerun()
+            else:
+                st.error("Erro ao atualizar!")
 
 with registrar_teste:
     FormMongoDB(client).form_widget('registration')
