@@ -48,18 +48,45 @@ indicadores, arquivamento, registrar_teste, remover_teste = st.tabs([
 ])
 
 # =========================
-# INDICADORES (CORRIGIDO)
+# INDICADORES
 # =========================
 with indicadores:
     collection = db['testes']
 
     col1, col2 = st.columns(2)
 
-    # -------- ANOS (SEGURO) --------
-with col1:
-    current_year = datetime.now().year
-    years = list(range(current_year - 5, current_year + 2))
-    year = st.selectbox("Selecione o ano", years, index=years.index(current_year))
+    # -------- ANOS --------
+    with col1:
+        try:
+            pipeline = [
+                {
+                    "$project": {
+                        "year": {
+                            "$year": {
+                                "$ifNull": ["$Data da próxima realização", datetime.now()]
+                            }
+                        }
+                    }
+                },
+                {"$group": {"_id": "$year"}}
+            ]
+            distinct_years = list(collection.aggregate(pipeline))
+            years = sorted(
+                [y["_id"] for y in distinct_years if y.get("_id") is not None]
+            )
+        except Exception as e:
+            st.warning(f"Erro ao buscar anos: {e}")
+            years = []
+
+        current_year = datetime.now().year
+        if not years:
+            years = [current_year]
+        if current_year not in years:
+            years.append(current_year)
+            years = sorted(years)
+
+        default_index = years.index(current_year)
+        year = st.selectbox("Selecione o ano", years, index=default_index)
 
     # -------- MESES --------
     with col2:
@@ -69,15 +96,12 @@ with col1:
             'Julho': 7, 'Agosto': 8, 'Setembro': 9,
             'Outubro': 10, 'Novembro': 11, 'Dezembro': 12
         }
-
         current_month = datetime.now().month
-
         months_key = st.selectbox(
             "Selecione o mês",
             list(months.keys()),
             index=current_month - 1
         )
-
         month = months[months_key]
 
     # -------- PERÍODO --------
@@ -90,7 +114,6 @@ with col1:
             "$lt": end_period
         }
     }
-
     query_done = {
         "Data de realização": {
             "$gte": begin_period,
@@ -123,13 +146,10 @@ with col1:
 
     with c1:
         st.metric("Total de testes", total_to_do)
-
     with c2:
         st.metric("Realização", f"{indicador_realizacao:.2f}%".replace('.', ','))
-
     with c3:
         st.metric("Arquivamento", f"{indicador_arquivamento:.2f}%".replace('.', ','))
-
     with c4:
         def refresh():
             current_month_due.clear()
@@ -160,7 +180,7 @@ with col1:
 
 
 # =========================
-# ARQUIVAMENTO (igual seu original)
+# ARQUIVAMENTO
 # =========================
 if 'teste_archivation' not in st.session_state:
     st.session_state.teste_archivation = False
@@ -176,7 +196,7 @@ with arquivamento:
     raw = list(teste_col.find(query, {'_id': 0, 'Data da próxima realização': 0}))
 
     if not raw:
-        st.info("Nenhum teste encontrado para o período. Cadastre testes na aba 'Registrar teste'.")
+        st.info("Nenhum teste encontrado para o período.")
     else:
         testes = pd.DataFrame(raw)
         filtered_tests = filters_archivation(testes)
@@ -193,9 +213,17 @@ with arquivamento:
 
         st.markdown("""
             <span style='font-size: smaller;'>
-            **Observação:** período de 1 mês. Clique na caixa para arquivar.
+            <b>Observação:</b> período de 1 mês. Clique na caixa para arquivar.
             </span>
         """, unsafe_allow_html=True)
+
+        with st.container(border=True):
+            st.markdown("""
+                <b>Legenda:</b> <br>
+                <span style='color: #FFA07A;'>Relatório atrasado</span> <br>
+                <span style='color: #FFD700;'>Dentro do período de desenvolvimento do relatório</span> <br>
+                <span style='color: #90EE90;'>Relatório realizado</span>
+            """, unsafe_allow_html=True)
 
         if st.session_state.teste_archivation:
             st.session_state.teste_archivation = False
