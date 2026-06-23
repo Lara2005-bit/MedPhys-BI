@@ -193,8 +193,6 @@ def calculate_indicadores(df_tests_need_to_do: pd.DataFrame) -> tuple:
         'not_done == False and `Sem material` == False'
     ).shape[0]
 
-    total_to_do = total - total_done
-
     indicador_realizacao = total_done / total * 100
 
     total_done_and_archived = df_tests_need_to_do.query(
@@ -206,5 +204,5 @@ def calculate_indicadores(df_tests_need_to_do: pd.DataFrame) -> tuple:
     return (
         indicador_realizacao,
         indicador_arquivado,
-        total_to_do
+        total
     )
