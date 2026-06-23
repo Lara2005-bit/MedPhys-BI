@@ -109,16 +109,17 @@ with indicadores:
     begin_month = datetime(year, month, 1)
     end_month   = datetime(year, month, 1) + pd.DateOffset(months=1)
 
-    # query_due: testes realizados no mês selecionado
-    # (usa "Data de realização" — campo real preenchido pelo usuário)
+    # query_due: testes que VENCEM no mês selecionado
+    # (usa "Data da próxima realização" — define o que precisa ser feito no mês)
     query_due = {
-        "Data de realização": {
+        "Data da próxima realização": {
             "$gte": begin_month,
             "$lt": end_month
         }
     }
 
-    # query_done: mesma janela — busca realizações e status de arquivamento
+    # query_done: testes que FORAM REALIZADOS no mês selecionado
+    # (usa "Data de realização" — campo real preenchido pelo usuário)
     query_done = {
         "Data de realização": {
             "$gte": begin_month,
@@ -138,12 +139,12 @@ with indicadores:
 
     styled_tests_need_to_do(df_tests_need_to_do)
 
-    indicador_realizacao, indicador_arquivamento, total_to_do = calculate_indicadores(df_tests_need_to_do)
+    indicador_realizacao, indicador_arquivamento, total_tests = calculate_indicadores(df_tests_need_to_do)
 
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        st.metric("Total de testes", total_to_do)
+        st.metric("Total de testes", total_tests)
     with c2:
         st.metric("Realização", f"{indicador_realizacao:.2f}%".replace('.', ','))
     with c3:
