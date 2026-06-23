@@ -55,7 +55,7 @@ with indicadores:
 
     col1, col2 = st.columns(2)
 
-    # -------- ANOS --------
+    # -------- ANOS (busca do MongoDB) --------
     with col1:
         try:
             pipeline = [
@@ -105,19 +105,25 @@ with indicadores:
         month = months[months_key]
 
     # -------- PERÍODO --------
-    begin_period = datetime(year, month, 1) - pd.DateOffset(years=1)
-    end_period = datetime(year, month, 1) + pd.DateOffset(months=1)
+    # query_due: busca testes cuja "Data da próxima realização" é o mês selecionado
+    begin_due = datetime(year, month, 1)
+    end_due   = datetime(year, month, 1) + pd.DateOffset(months=1)
+
+    # query_done: busca realizações no último ano (para cobrir testes de qualquer periodicidade)
+    begin_done = datetime(year, month, 1) - pd.DateOffset(years=1)
+    end_done   = datetime(year, month, 1) + pd.DateOffset(months=1)
 
     query_due = {
         "Data da próxima realização": {
-            "$gte": begin_period,
-            "$lt": end_period
+            "$gte": begin_due,
+            "$lt": end_due
         }
     }
+
     query_done = {
         "Data de realização": {
-            "$gte": begin_period,
-            "$lt": end_period
+            "$gte": begin_done,
+            "$lt": end_done
         }
     }
 
@@ -127,13 +133,6 @@ with indicadores:
     except Exception as e:
         st.error(f"Erro MongoDB query: {e}")
         st.stop()
-
-    # Garante colunas mínimas em DataFrames vazios para evitar KeyError no merge
-    required_cols = ['Equipamento', 'Nome', 'Data de realização', 'Arquivado']
-    if df_tests_to_due.empty:
-        df_tests_to_due = pd.DataFrame(columns=required_cols + ['Data da próxima realização'])
-    if df_tests_now.empty:
-        df_tests_now = pd.DataFrame(columns=required_cols)
 
     df_tests_need_to_do = get_tests_need_to_do(df_tests_to_due, df_tests_now)
     df_tests_need_to_do = check_materials(df_tests_need_to_do)
