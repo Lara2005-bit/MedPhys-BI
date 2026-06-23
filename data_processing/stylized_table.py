@@ -3,21 +3,29 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 def styled_tests_need_to_do(dataframe):
-    tests_to_do_current_month = dataframe.query('not_done == True').drop(columns=['not_done'])
-    if not tests_to_do_current_month.empty:
-        tests_to_do_current_month.rename(columns={'Data de realização': 'Data da última realização', 'Data da próxima realização': 'Data de realização esperada'}, inplace=True)
-        tests_to_do_current_month.sort_values(by=['Sem material','Data de realização esperada'], inplace=True)
-        s_tests_to_do_current_month = tests_to_do_current_month.drop(columns='Arquivado').style
-        s_tests_to_do_current_month.format(
-            {
-                'Data da última realização': '{:%d/%m/%Y}',
-                'Data de realização esperada': '{:%d/%m/%Y}'
-            }
-        )
-        
-        # Exibir os testes que estão para vencer no mês corrente
-        st.dataframe(s_tests_to_do_current_month, hide_index=True, use_container_width=True)
-    else:
+    if dataframe.empty:
+        st.success('Todos os testes realizados!')
+        return
+
+    all_tests = dataframe.drop(columns=['not_done']).copy()
+    all_tests.rename(columns={
+        'Data de realização': 'Data da última realização',
+        'Data da próxima realização': 'Data de realização esperada'
+    }, inplace=True)
+    all_tests.sort_values(by=['Sem material', 'Data de realização esperada'], inplace=True)
+
+    s_all_tests = all_tests.drop(columns='Arquivado').style
+    s_all_tests.format(
+        {
+            'Data da última realização': '{:%d/%m/%Y}',
+            'Data de realização esperada': '{:%d/%m/%Y}'
+        }
+    )
+
+    st.dataframe(s_all_tests, hide_index=True, use_container_width=True)
+
+    pending = dataframe.query('not_done == True')
+    if pending.empty:
         st.success('Todos os testes realizados!')
 class StylizedTable:
     def __init__(self, table: pd.DataFrame) -> None:
