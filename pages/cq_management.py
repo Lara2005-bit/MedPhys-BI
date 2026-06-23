@@ -104,20 +104,21 @@ with indicadores:
         )
         month = months[months_key]
 
-# -------- PERÍODO --------
+    # -------- PERÍODO --------
     # begin/end do mês selecionado
     begin_month = datetime(year, month, 1)
     end_month   = datetime(year, month, 1) + pd.DateOffset(months=1)
 
-    # CORREÇÃO: query_due busca os testes cuja previsão (próxima realização) é para este mês
+    # query_due: testes realizados no mês selecionado
+    # (usa "Data de realização" — campo real preenchido pelo usuário)
     query_due = {
-        "Data da próxima realização": {
+        "Data de realização": {
             "$gte": begin_month,
             "$lt": end_month
         }
     }
 
-    # query_done: busca o que de fato foi realizado dentro do mês selecionado
+    # query_done: mesma janela — busca realizações e status de arquivamento
     query_done = {
         "Data de realização": {
             "$gte": begin_month,
@@ -142,9 +143,7 @@ with indicadores:
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        # Puxa o total de testes planejados para o mês (que não estão marcados como sem material)
-        total_planejado = df_tests_need_to_do.query('`Sem material` == False').shape[0]
-        st.metric("Total de testes para realizar", total_planejado)
+        st.metric("Total de testes", total_to_do)
     with c2:
         st.metric("Realização", f"{indicador_realizacao:.2f}%".replace('.', ','))
     with c3:
