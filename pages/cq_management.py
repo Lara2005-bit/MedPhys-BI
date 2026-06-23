@@ -55,7 +55,7 @@ with indicadores:
 
     col1, col2 = st.columns(2)
 
-    # -------- ANOS (busca do MongoDB) --------
+    # -------- ANOS: busca por "Data de realização" (campo preenchido pelo usuário) --------
     with col1:
         try:
             pipeline = [
@@ -63,7 +63,7 @@ with indicadores:
                     "$project": {
                         "year": {
                             "$year": {
-                                "$ifNull": ["$Data da próxima realização", datetime.now()]
+                                "$ifNull": ["$Data de realização", datetime.now()]
                             }
                         }
                     }
@@ -105,25 +105,24 @@ with indicadores:
         month = months[months_key]
 
     # -------- PERÍODO --------
-    # query_due: busca testes cuja "Data da próxima realização" é o mês selecionado
-    begin_due = datetime(year, month, 1)
-    end_due   = datetime(year, month, 1) + pd.DateOffset(months=1)
+    # begin/end do mês selecionado
+    begin_month = datetime(year, month, 1)
+    end_month   = datetime(year, month, 1) + pd.DateOffset(months=1)
 
-    # query_done: busca realizações no último ano (para cobrir testes de qualquer periodicidade)
-    begin_done = datetime(year, month, 1) - pd.DateOffset(years=1)
-    end_done   = datetime(year, month, 1) + pd.DateOffset(months=1)
-
+    # query_due: testes realizados no mês selecionado
+    # (usa "Data de realização" — campo real preenchido pelo usuário)
     query_due = {
-        "Data da próxima realização": {
-            "$gte": begin_due,
-            "$lt": end_due
+        "Data de realização": {
+            "$gte": begin_month,
+            "$lt": end_month
         }
     }
 
+    # query_done: mesma janela — busca realizações e status de arquivamento
     query_done = {
         "Data de realização": {
-            "$gte": begin_done,
-            "$lt": end_done
+            "$gte": begin_month,
+            "$lt": end_month
         }
     }
 
