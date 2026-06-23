@@ -23,22 +23,16 @@ class FormMongoDB():
             return date + pd.DateOffset(years=1)
         
     def form_widget(self, type_form):
-        """
-        Creates a form widget for inserting or removing a test.
-
-        Parameters:
-        - type_form (str): The type of form, either 'registration' or 'removal'.
-
-        Returns:
-        None
-        """
         test = {}
         self.collection = self.db['equipamentos']
         equipamentos = self.collection.find({}, {'_id': 0, 'Identificação': 1})
         
-        
         with st.container(border=True):
-            test['Equipamento'] = st.selectbox('Equipamento', [equipamento['Identificação'] for equipamento in equipamentos], key=type_form + '_equipamento')
+            test['Equipamento'] = st.selectbox(
+                'Equipamento',
+                [equipamento['Identificação'] for equipamento in equipamentos],
+                key=type_form + '_equipamento'
+            )
             
             with st.form(key=type_form, clear_on_submit=True, border=False):
                 
@@ -53,25 +47,30 @@ class FormMongoDB():
                 elif test['Equipamento'] in ['Curiômetro MN', 'Curiômetro PET', 'Curiômetro MN Carpintec']:
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_curiometro_periodicity.keys()), key=type_form + '_nome')
                     
-                test['Data de realização'] = pd.to_datetime(st.date_input('Data de realização'), format='DD/MM/YYYY')
+                test['Data de realização'] = pd.to_datetime(
+                    st.date_input('Data de realização'),
+                    format='DD/MM/YYYY'
+                )
                 
                 submit_label = 'Remover teste' if type_form == 'removal' else 'Inserir teste'
                 submit_button = st.form_submit_button(label=submit_label)
+
                 if submit_button:
-                    test['Data da próxima realização'] = self._next_test(test['Nome'], test['Data de realização'])
-                    test['Arquivado'] = False
-                    
-                    test['Data de realização'] = test['Data de realização']
-                    test['Data da próxima realização'] = test['Data da próxima realização']
-                    
                     self.collection = self.db['testes']
+
                     if type_form == 'registration':
-                        # Removing 'Arquivado' key to check if the test is already inserted
-                        check_test = test.fromkeys(['Equipamento', 'Nome', 'Data de realização'])
-                        check_test['Equipamento'] = test['Equipamento']
-                        check_test['Nome'] = test['Nome']
-                        check_test['Data de realização'] = test['Data de realização']
-                        if self.collection.find_one(test) is not None:
+                        test['Data da próxima realização'] = self._next_test(
+                            test['Nome'], test['Data de realização']
+                        )
+                        test['Arquivado'] = False
+
+                        # Verifica duplicata só pelos campos que o usuário informa
+                        check_test = {
+                            'Equipamento': test['Equipamento'],
+                            'Nome': test['Nome'],
+                            'Data de realização': test['Data de realização']
+                        }
+                        if self.collection.find_one(check_test) is not None:
                             st.error('Teste já inserido!')
                             self.client.close()
                         else:
@@ -81,16 +80,23 @@ class FormMongoDB():
                                 time.sleep(1)
                                 self.client.close()
                                 st.rerun()
+
                     elif type_form == 'removal':
-                        removal_status = self.collection.delete_one(test)
+                        # Busca e remove apenas pelos campos que o usuário informa
+                        # Ignora 'Data da próxima realização' e 'Arquivado' que podem
+                        # ter valores diferentes do calculado pelo formulário
+                        removal_query = {
+                            'Equipamento': test['Equipamento'],
+                            'Nome': test['Nome'],
+                            'Data de realização': test['Data de realização']
+                        }
+                        removal_status = self.collection.delete_one(removal_query)
                         if removal_status.deleted_count > 0:
                             st.success('Teste removido com sucesso!')
                             time.sleep(1)
                             self.client.close()
                             st.rerun()
                         else:
-                            st.error('Erro ao remover o teste!')
+                            st.error('Teste não encontrado! Verifique o equipamento, nome e data.')
                     else:
                         raise ValueError('Invalid type_form')
-                    
-        
