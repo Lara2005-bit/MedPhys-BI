@@ -125,14 +125,9 @@ def get_tests_need_to_do(
         ].copy()
 
         if not df_temp.empty:
-            df_temp['not_done'] = (
-                df_temp['Data de realização'].isna()
-            ) | (
-                (
-                    df_temp['Data da próxima realização']
-                    - df_temp['Data de realização']
-                ) >= pd.Timedelta(days=dias)
-            )
+            # Se o teste tem "Data de realização" preenchida, foi realizado.
+            # A query já filtra pelo mês correto, não precisamos comparar dias.
+            df_temp['not_done'] = df_temp['Data de realização'].isna()
 
         resultado.append(df_temp)
 
