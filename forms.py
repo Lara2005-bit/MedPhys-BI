@@ -36,15 +36,15 @@ class FormMongoDB():
             
             with st.form(key=type_form, clear_on_submit=True, border=False):
                 
-                if test['Equipamento'] in ['FMMNINFINIA', 'FMMNMILLENNIUM', 'FMMNVENTRI', 'EPD', 'MN Discovery']:
+                if test['Equipamento'] in ['FMMNINFINIA', 'FMMNVENTRI', 'FMMN Discovery']:
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gc_periodicity.keys()), key=type_form + '_nome')
                 elif test['Equipamento'] == 'FMMNPETCT':
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_pet_periodicity.keys()), key=type_form + '_nome')
-                elif test['Equipamento'] in ['GM 2', 'GM 3', 'GM 4', 'GM 5']:
+                elif test['Equipamento'] in ['GM 2', 'GM 3', 'GM 4', 'GM 5', 'EPD']:
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gm_periodicity.keys()), key=type_form + '_nome')
                 elif test['Equipamento'] in ['Gamma Probe Verde', 'Gamma Probe Amarela', 'Gamma Probe Branca']:
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gp_periodicity.keys()), key=type_form + '_nome')
-                elif test['Equipamento'] in ['Curiômetro MN', 'Curiômetro PET', 'Curiômetro MN Carpintec']:
+                elif test['Equipamento'] in ['Curiômetro MN', 'Curiômetro PET', 'Curiômetro MN ATOMLAB']:
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_curiometro_periodicity.keys()), key=type_form + '_nome')
                     
                 test['Data de realização'] = pd.to_datetime(
