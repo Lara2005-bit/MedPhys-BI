@@ -41,9 +41,16 @@ class TestsPeriodicity():
             'Uniformidade íntrinseca para Ga-67': 'Anual',
             'Uniformidade íntrinseca para Tl-201': 'Anual',
             'Uniformidade intrínseca com janelas energéticas assimétricas': 'Anual',
-            'Resolução e linearidade espacial extrínseca LEHR': 'Anual',
-            'Resolução e linearidade espacial extrínseca MEGP': 'Anual',
-            'Resolução e linearidade espacial extrínseca HEGP': 'Anual'
+            'Resolução e linearidade espacial extrínseca LEHR- Qualitativo': 'Anual',
+            'Resolução e linearidade espacial extrínseca MEGP- Qualitativo': 'Anual',
+            'Resolução e linearidade espacial extrínseca HEGP- Qualitativo': 'Anual',
+            'Resolução e linearidade espacial extrínseca LEHR- Quantitativo': 'Anual',
+            'Resolução e linearidade espacial extrínseca MEGP- Quantitativo': 'Anual',
+            'Resolução e linearidade espacial extrínseca HEGP- Quantitativo': 'Anual',
+            'Teste de angulação dos furos (LEHR)': 'Semestral', 
+            'Teste de angulação dos furos (HEGP)': 'Semestral', 
+            'Teste de angulação dos furos (MEGP)': 'Semestral',
+            'Uniformidade com alta densidade de contagens (VENTRI)': 'Mensal'
         }
         return list_tests_gc_periodicity
     
@@ -52,11 +59,15 @@ class TestsPeriodicity():
             'Uniformidade e verificação da calibração do sistema PET-CT': 'Mensal',
             'Alinhamento entre sistemas de laser PET/CT':'Sem periodicidade definida',
             'Normalização e calibração cruzada': 'Trimestral',
-            'Resolução espacial': 'Semestral',
-            'Sensibilidade': 'Semestral',
+            'Resolução espacial (transversal e axial)': 'Semestral',
+            'Sensibilidade': 'Trimestral',
             'Corregistro das imagens de PET e CT': 'Semestral',
             'Desempenho da taxa de contagens (NECR), taxa de eventos aleatórios, espalhados e verdadeiros, fração de espalhamento e exatidão das correções de eventos aleatórios e de perda de contagens': 'Anual',
             'Desempenho geral e exatidão das correções de atenuação e espalhamento': 'Anual',
+            'Atualização dos ganhos': 'Semanal',
+            'Atualização da Correção da Sincronização de Coincidência (CTC)': 'Trimestral',
+            'Estabelecimento de nova linha de base do PET DQA': 'Trimestral',
+            'Fração de espelhamento': 'Anual'
         }
         return list_tests_pet_periodicity
     
