@@ -73,7 +73,7 @@ class TestsPeriodicity():
         }
         return list_tests_gcinfinia_periodicity
 
-    def _set_gcventri_tests(self):
+    def _set_gcdiscovery_tests(self):
         list_tests_gcdiscovery_periodicity = {
             'Resolução e linearidade espacial intrínsecas': 'Mensal',
             'COR (LEHR)': 'Mensal',
