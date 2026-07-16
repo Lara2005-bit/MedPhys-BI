@@ -8,6 +8,7 @@ class TestsPeriodicity():
         self.list_tests_pet_periodicity = self._set_pet_tests()
         self.list_tests_curiometro_periodicity = self._set_curiometro_tests()
         self.list_tests_gm_periodicity = self._set_gm_tests()
+         self.list_tests_ct_periodicity = self._set_ct_tests()
         self.list_tests_gp_periodicity = self._set_gp_tests()
         
     def _set_gcventri_tests(self):
@@ -147,6 +148,24 @@ class TestsPeriodicity():
             'Reprodutibilidade': 'Mensal'
         }
         return list_tests_gm_periodicity
+
+    def _set_ct_tests(self):
+        list_tests_ct_periodicity = {
+            'Valores, Uniformidade e Ruído dos nº CT': 'Semanal',
+            'Resolução espacial': 'Anual',
+            'Avaliação da resolução de baixo contraste em TC': 'Anual',
+            'Verificação de ausência de artefatos na imagem': 'Anual',
+            'Exatidão do indicador da tensão do tubo': 'Anual',
+            'Exatidão do indicador do deslocamento da mesa': 'Anual',
+            'Coincidência entre os indicadores luminosos': 'Anual',
+            'Alinhamento entre os sistemas de Lasers (externo e do PET-CT)*': 'Anual',
+            'Exatidão da espessura do corte': 'Anual',
+            'Compensação dos sistemas de modulação de corrente para diferentes espessuras': 'Anual',
+            'Valores representativos de dose': 'Anual',
+            'Exatidão do indicador de dose em CT': 'Anual',
+            'Levantamento radiométrico': 'Quadrienal'
+        }
+        return list_tests_ct_periodicity
     
     def _set_gp_tests(self):
         list_tests_gp_periodicity = {
@@ -161,6 +180,7 @@ class TestsPeriodicity():
                 **self.list_tests_pet_periodicity,
                 **self.list_tests_curiometro_periodicity,
                 **self.list_tests_gm_periodicity,
+                **self.list_tests_ct_periodicity,
                 **self.list_tests_gp_periodicity}
 
     def map_gcventri_periodicity(self, name):
@@ -180,6 +200,9 @@ class TestsPeriodicity():
 
     def map_gm_periodicity(self, name):
         return self.list_tests_gm_periodicity[name]
+
+    def map_ct_periodicity(self, name):
+        return self.list_tests_ct_periodicity[name]
 
     def map_gp_periodicity(self, name):
         return self.list_tests_gp_periodicity[name]
