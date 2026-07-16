@@ -8,7 +8,7 @@ class TestsPeriodicity():
         self.list_tests_pet_periodicity = self._set_pet_tests()
         self.list_tests_curiometro_periodicity = self._set_curiometro_tests()
         self.list_tests_gm_periodicity = self._set_gm_tests()
-         self.list_tests_ct_periodicity = self._set_ct_tests()
+        self.list_tests_ct_periodicity = self._set_ct_tests()
         self.list_tests_gp_periodicity = self._set_gp_tests()
         
     def _set_gcventri_tests(self):
