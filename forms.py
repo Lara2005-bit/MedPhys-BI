@@ -13,7 +13,9 @@ class FormMongoDB():
     def _next_test(self, name, date):
         list_tests_periodicity = self.tests_periodicity.full_list()
         periodicity = list_tests_periodicity[name]
-        if periodicity == 'Mensal':
+        if periodicity == 'Semanal':
+            return date + pd.DateOffset(weeks=1)
+        elif periodicity == 'Mensal':
             return date + pd.DateOffset(months=1)
         elif periodicity == 'Trimestral':
             return date + pd.DateOffset(months=3)
@@ -36,8 +38,12 @@ class FormMongoDB():
             
             with st.form(key=type_form, clear_on_submit=True, border=False):
                 
-                if test['Equipamento'] in ['FMMNINFINIA', 'FMMNVENTRI', 'FMMN Discovery']:
-                    test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gc_periodicity.keys()), key=type_form + '_nome')
+                if test['Equipamento'] in 'FMMNVENTRI':
+                    test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gcventri_periodicity.keys()), key=type_form + '_nome')
+                elif test['Equipamento'] in 'FMMNINFINIA':
+                    test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gcinfinia_periodicity.keys()), key=type_form + '_nome')
+                elif test['Equipamento'] in 'FMMN Discovery':
+                    test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gcdiscovery_periodicity.keys()), key=type_form + '_nome')
                 elif test['Equipamento'] == 'FMMNPETCT':
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_pet_periodicity.keys()), key=type_form + '_nome')
                 elif test['Equipamento'] in ['GM 2', 'GM 3', 'GM 4', 'GM 5', 'EPD']:
