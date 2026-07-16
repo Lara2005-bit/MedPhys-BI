@@ -54,7 +54,7 @@ class FormMongoDB():
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gp_periodicity.keys()), key=type_form + '_nome')
                 elif test['Equipamento'] in ['Curiômetro MN', 'Curiômetro PET', 'Curiômetro MN ATOMLAB']:
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_curiometro_periodicity.keys()), key=type_form + '_nome')
-                 elif test['Equipamento'] in 'Tomógrafo':
+                elif test['Equipamento'] in 'Tomógrafo':
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_ct_periodicity.keys()), key=type_form + '_nome')
                     
                 test['Data de realização'] = pd.to_datetime(
