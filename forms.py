@@ -23,6 +23,8 @@ class FormMongoDB():
             return date + pd.DateOffset(months=6)
         elif periodicity == 'Anual':
             return date + pd.DateOffset(years=1)
+        elif periodicity == 'Quadrienal':
+            return date + pd.DateOffset(years=4)
         
     def form_widget(self, type_form):
         test = {}
@@ -52,6 +54,8 @@ class FormMongoDB():
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_gp_periodicity.keys()), key=type_form + '_nome')
                 elif test['Equipamento'] in ['Curiômetro MN', 'Curiômetro PET', 'Curiômetro MN ATOMLAB']:
                     test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_curiometro_periodicity.keys()), key=type_form + '_nome')
+                 elif test['Equipamento'] in 'Tomógrafo':
+                    test['Nome'] = st.selectbox('Nome do Teste', list(self.tests_periodicity.list_tests_ct_periodicity.keys()), key=type_form + '_nome')
                     
                 test['Data de realização'] = pd.to_datetime(
                     st.date_input('Data de realização'),
