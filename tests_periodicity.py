@@ -68,7 +68,7 @@ class TestsPeriodicity():
             'Resolução e linearidade espacial extrínsecas (LEHR)- Qualitativo': 'Anual',
             'Resolução e linearidade espacial extrínsecas (HEGP)- Qualitativo': 'Anual',
             'Resolução e linearidade espacial extrínseca (MEGP)- Qualitativo': 'Anual',
-            'Resoução e linearidade espacial extrínseca (LEHR)- Quantitativo': 'Anual',
+            'Resolução e linearidade espacial extrínseca (LEHR)- Quantitativo': 'Anual',
             'Resolução e linearidade espacial extrínseca (HEGP)- Quantitativo': 'Anual',
             'Resolução e linearidade espacial extrínseca (MEGP)- Quantitativo': 'Anual'
         }
@@ -109,7 +109,7 @@ class TestsPeriodicity():
             'Resolução e linearidade espacial extrínsecas (LEHR)- Qualitativo': 'Anual',
             'Resolução e linearidade espacial extrínsecas (HEGP)- Qualitativo': 'Anual',
             'Resolução e linearidade espacial extrínseca (MEGP)- Qualitativo': 'Anual',
-            'Resoução e linearidade espacial extrínseca (LEHR)- Quantitativo': 'Anual',
+            'Resolução e linearidade espacial extrínseca (LEHR)- Quantitativo': 'Anual',
             'Resolução e linearidade espacial extrínseca (HEGP)- Quantitativo': 'Anual',
             'Resolução e linearidade espacial extrínseca (MEGP)- Quantitativo': 'Anual'
         }
