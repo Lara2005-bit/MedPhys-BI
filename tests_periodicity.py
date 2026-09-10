@@ -14,7 +14,7 @@ class TestsPeriodicity():
     def _set_gcventri_tests(self):
         list_tests_gcventri_periodicity = {
             'Resolução e linearidade espacial intrínsecas': 'Mensal',
-            'Centro de rotção (COR)': 'Mensal',
+            'Centro de rotação (COR)': 'Mensal',
             'Uniformidade com alta densidade de contagens': 'Mensal',
             'Resolução energética (Tc-99m)': 'Semestral',
             'Resolução energética (Tl-201)': 'Semestral',
