@@ -144,6 +144,18 @@ def get_tests_need_to_do(
     ])
 
 
+def clear_indicadores_cache() -> None:
+    """Limpa o cache dos indicadores.
+
+    Deve ser chamada sempre que a coleção 'testes' for alterada (arquivar,
+    registrar ou remover teste); caso contrário os gráficos continuam
+    mostrando os dados antigos até o TTL de 1h expirar.
+    """
+    current_month_due.clear()
+    current_month_done.clear()
+    get_tests_need_to_do.clear()
+
+
 def check_materials(df_tests_need_to_do: pd.DataFrame) -> pd.DataFrame:
 
     if df_tests_need_to_do.empty:
