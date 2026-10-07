@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import time
 from tests_periodicity import TestsPeriodicity
-        
+from data_processing.indicadores import clear_indicadores_cache
+
 class FormMongoDB():
     def __init__(self, client) -> None:
         self.client = client
@@ -86,6 +87,7 @@ class FormMongoDB():
                         else:
                             insert_status = self.collection.insert_one(test)
                             if insert_status.acknowledged:
+                                clear_indicadores_cache()
                                 st.success('Teste inserido com sucesso!')
                                 time.sleep(1)
                                 self.client.close()
@@ -102,6 +104,7 @@ class FormMongoDB():
                         }
                         removal_status = self.collection.delete_one(removal_query)
                         if removal_status.deleted_count > 0:
+                            clear_indicadores_cache()
                             st.success('Teste removido com sucesso!')
                             time.sleep(1)
                             self.client.close()
