@@ -15,11 +15,14 @@ def styled_tests_need_to_do(dataframe):
     all_tests.sort_values(by=['Sem material', 'Data de realização esperada'], inplace=True)
 
     s_all_tests = all_tests.drop(columns='Arquivado').style
+    # na_rep: testes ainda não realizados têm "Data da última realização"
+    # vazia (NaT) e o formato de data falharia com ValueError sem isso.
     s_all_tests.format(
         {
             'Data da última realização': '{:%d/%m/%Y}',
             'Data de realização esperada': '{:%d/%m/%Y}'
-        }
+        },
+        na_rep='—'
     )
 
     st.dataframe(s_all_tests, hide_index=True, use_container_width=True)
