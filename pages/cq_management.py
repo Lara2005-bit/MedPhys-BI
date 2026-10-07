@@ -15,7 +15,8 @@ from data_processing.indicadores import (
     current_month_done,
     get_tests_need_to_do,
     check_materials,
-    calculate_indicadores
+    calculate_indicadores,
+    clear_indicadores_cache
 )
 from forms import FormMongoDB
 
@@ -109,16 +110,19 @@ with indicadores:
     begin_month = datetime(year, month, 1)
     end_month   = datetime(year, month, 1) + pd.DateOffset(months=1)
 
-    # query_due: testes realizados no mês selecionado
-    # (usa "Data de realização" — campo real preenchido pelo usuário)
+    # query_due: testes que VENCEM no mês selecionado
+    # (usa "Data da próxima realização" — define o que precisa ser feito no mês).
+    # NÃO usar "Data de realização" aqui: isso faria previstos == realizados
+    # e os indicadores ficariam sempre em 100%.
     query_due = {
-        "Data de realização": {
+        "Data da próxima realização": {
             "$gte": begin_month,
             "$lt": end_month
         }
     }
 
-    # query_done: mesma janela — busca realizações e status de arquivamento
+    # query_done: testes que FORAM REALIZADOS no mês selecionado
+    # (usa "Data de realização" — campo real preenchido pelo usuário)
     query_done = {
         "Data de realização": {
             "$gte": begin_month,
@@ -149,12 +153,7 @@ with indicadores:
     with c3:
         st.metric("Arquivamento", f"{indicador_arquivamento:.2f}%".replace('.', ','))
     with c4:
-        def refresh():
-            current_month_due.clear()
-            current_month_done.clear()
-            get_tests_need_to_do.clear()
-
-        st.button("Atualizar dados", on_click=refresh)
+        st.button("Atualizar dados", on_click=clear_indicadores_cache)
 
     done_df = df_tests_need_to_do.query(
         "not_done == False and `Sem material` == False"
@@ -234,6 +233,7 @@ with arquivamento:
             archived_status = {'Arquivado': diff_value.values[0]}
             update_status = teste_col.update_one(query[0], {'$set': archived_status})
             if update_status.matched_count > 0:
+                clear_indicadores_cache()
                 st.success("Atualizado!")
                 time.sleep(1)
                 client.close()
